@@ -33,45 +33,77 @@ def update_Q_value(state, action, next_state, reward):
     new_Q = (1 - alpha) * current_Q + alpha * (reward + gamma * best_next_Q)
     Q_values[(state, action)] = new_Q
 
-# Streamlit UI
-def main():
-    st.title("Indoor air temperature control system")
 
-    # Ask for the external temperature
-    external_temperature = st.number_input("Enter the external temperature:")
-
+# Function to simulate the air conditioner agent
+def air_conditioner_agent():
     epsilon = 0.2  # Exploration-exploitation trade-off
-    indoor_temperature = 24
+    episodes = 10  # Reduced number of training episodes for simplicity
 
-    # Create a placeholder for the system-generated output
-    output_placeholder = st.empty()
+    # Initialize session state
+    if 'indoor_temperature' not in st.session_state:
+        st.session_state.indoor_temperature = 24
+        st.session_state.episode_number = 1
 
-    # Simulate the environment
-    action = choose_action(indoor_temperature, epsilon)
+        
+    episode = st.session_state.episode_number
 
-    # Update the placeholder with the system-generated output
-    output_placeholder.write(f"Action: {action}")
+    for episode in range(episodes):
+        # Display inputs for the current episode only when the "Next Episode" button is clicked
+        #episode_container = st.empty()
 
-    # Ask the user if manual changes are required
-    manual_changes_required = st.radio("Do you want to make manual changes to the indoor temperature?", ("Yes", "No"))
+        # Display the initial indoor temperature
+        st.write(f"Initial Indoor Temperature = {st.session_state.indoor_temperature}")
 
-    # If manual changes are required, ask the user for the desired indoor temperature
-    if manual_changes_required == "Yes":
-        new_indoor_temperature = st.number_input("Enter the desired indoor temperature:")
-        indoor_temperature = new_indoor_temperature
+        # User inputs external temperature
+        outdoor_temperature_key = f"outdoor_temperature_{episode}"
+        outdoor_temperature = st.number_input("Enter the external temperature:", key=outdoor_temperature_key)
 
-    # Update Q-value and apply rewards/punishments
-    next_indoor_temperature = indoor_temperature
-    if action == "decrease":
-        next_indoor_temperature -= 1
-    elif action == "increase":
-        next_indoor_temperature += 1
-    update_Q_value(indoor_temperature, action, next_indoor_temperature, reward if manual_changes_required == "No" else punishment)
+        # Limiting the number of actions for simplicity
+        # Choose action using epsilon-greedy policy
+        action = choose_action(st.session_state.indoor_temperature, epsilon)
+        #print(st.session_state.indoor_temperature)
+        next_indoor_temperature = st.session_state.indoor_temperature
+        #print(next_indoor_temperature)
+        if action == "decrease":
+            next_indoor_temperature -= 1
+        elif action == "increase":
+            next_indoor_temperature += 1
 
-    # Display Q-values
-    st.write("Q-values:")
-    for key, value in Q_values.items():
-        st.write(f"Q-value for state-action pair {key}: {value}")
+        # Display indoor temperature after each action, only if outdoor temperature is provided
+        st.write(f"Action: {action}, New Indoor Temperature: {next_indoor_temperature}")
+
+        # Ask the user if manual changes are required
+        manual_changes_required_key = f"manual_changes_required_{episode}"
+        manual_changes_required = st.radio("Do you want to make manual changes to the indoor temperature?", ("Yes", "No"), key=manual_changes_required_key, index=None)
+
+        # If manual changes are required, ask the user for the desired indoor temperature
+        if manual_changes_required == "Yes":
+            new_indoor_temperature_key = f"new_indoor_temperature_{episode}"
+            new_indoor_temperature = st.number_input("Enter the desired indoor temperature:", key=new_indoor_temperature_key)
+            next_indoor_temperature = new_indoor_temperature
+
+        # Update Q-value and apply rewards/punishments
+        if manual_changes_required == "No":
+            update_Q_value(st.session_state.indoor_temperature, action, next_indoor_temperature, reward)
+        else:
+            update_Q_value(st.session_state.indoor_temperature, action, next_indoor_temperature, punishment)
+
+        # Move to the next state
+        
+
+        next_button_key = f"next_button_{episode}"
+        if st.button(f"Next", key=next_button_key):
+            st.session_state.indoor_temperature = next_indoor_temperature  
+            st.session_state.episode_number += 1
+            st.rerun()
+        else:
+            break
 
 if __name__ == "__main__":
-    main()
+    st.title("Indoor Air Conditioner Control System")
+    air_conditioner_agent()
+
+    # Print the learned Q-values
+    st.write("Learned Q-values:")
+    for key, value in Q_values.items():
+        st.write(f"Q-value for state-action pair {key}: {value}")
