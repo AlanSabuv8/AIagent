@@ -1,17 +1,13 @@
 import streamlit as st
-import random
 
 def max_qvalue(a, b, c):
-    if (a == b and b == c):
-        return random.choice([0,1,2])
+    max_val = max(a, b, c)
+    if max_val == a:
+        return 0
+    elif max_val == b:
+        return 1
     else:
-        max_val = max(a, b, c)
-        if max_val == a:
-            return 0
-        elif max_val == b:
-            return 1
-        else:
-            return 2
+        return 2
     
 
 
