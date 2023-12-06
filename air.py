@@ -72,7 +72,7 @@ def airTemp(j,k):
     if st.button(f"Next", key=next_button_key):
         if change is not None:
             if new_temp is not None or change == "No":
-                maxQ = max_qvalue(st.session_state.qvalue[new_temp][0], st.session_state.qvalue[new_temp][1], st.session_state.qvalue[new_temp][2])
+                maxQ = st.session_state.qvalue[new_temp][max_qvalue(st.session_state.qvalue[new_temp][0], st.session_state.qvalue[new_temp][1], st.session_state.qvalue[new_temp][2])]
                 Q = reward + maxQ
                 st.session_state.qvalue[st.session_state.temp][act] = Q
                 st.session_state.temp = new_temp
